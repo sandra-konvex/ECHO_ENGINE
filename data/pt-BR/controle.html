@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Monitoramento ESP32</title>
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; background-color: #f4f4f4; }
+    h1 { color: #333; }
+    ul { list-style: none; padding: 0; }
+    li a { text-decoration: none; color: blue; margin: 4px 0; display: block; }
+    #grafico { width: 100%; height: 400px; margin-top: 20px; background-color: #fff; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>Arquivos disponíveis</h1>
+  <ul id="lista-arquivos"></ul>
+
+  <h2>Gráfico - Última Hora</h2>
+  <div id="grafico"></div>
+
+  <script>
+    // 🗂️ Carrega a lista de arquivos e cria links
+    fetch('/list')
+      .then(response => response.text())
+      .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const items = doc.querySelectorAll('li');
+        const lista = document.getElementById('lista-arquivos');
+
+        items.forEach(item => {
+          const nome = item.textContent.trim();
+          const link = document.createElement('a');
+          link.href = '/dump?file=' + encodeURIComponent('/dados/' + nome);
+          link.textContent = nome;
+          link.target = '_blank';
+          const li = document.createElement('li');
+          li.appendChild(link);
+          lista.appendChild(li);
+        });
+      });
+
+    // 📊 Inicializa gráfico com dados do buffer
+    let chart;
+    fetch('/buffer')
+      .then(res => res.json())
+      .then(data => {
+        const seriesMax = [];
+        const seriesMin = [];
+
+        data.forEach(ponto => {
+          const t = parseInt(ponto.time) * 1000;
+          seriesMax.push([t, parseInt(ponto.max)]);
+          seriesMin.push([t, parseInt(ponto.min)]);
+        });
+
+        chart = Highcharts.chart('grafico', {
+          chart: { type: 'spline' },
+          title: { text: 'Valores em Tempo Real' },
+          xAxis: { type: 'datetime' },
+          yAxis: { title: { text: 'Valor' } },
+          series: [
+            { name: 'Máximo', data: seriesMax, color: 'red' },
+            { name: 'Mínimo', data: seriesMin, color: 'blue' }
+          ]
+        });
+      });
+
+    // 🔴 Atualização em tempo real via SSE
+    if (!!window.EventSource) {
+      const source = new EventSource('/events');
+
+      source.addEventListener("dado", function(event) {
+        const ponto = JSON.parse(event.data);
+        const t = parseInt(ponto.time) * 1000;
+
+        // Adiciona ao gráfico
+        chart.series[0].addPoint([t, parseInt(ponto.max)], true, chart.series[0].data.length >= 340);
+        chart.series[1].addPoint([t, parseInt(ponto.min)], true, chart.series[1].data.length >= 340);
+      }, false);
+    } else {
+      console.log("❌ SSE não suportado neste navegador.");
+    }
+  </script>
+</body>
+</html>

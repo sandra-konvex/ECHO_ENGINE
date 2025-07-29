@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="UTF-8">
+  <title>LittleFS Explorer</title>
+  <style>
+    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
+    h1 { color: #333; }
+    ul { list-style: none; padding: 0; }
+    li { background: #fff; margin: 5px 0; padding: 10px; border-radius: 5px; }
+    a { text-decoration: none; color: #007bff; margin-left: 10px; }
+  </style>
+</head>
+<body>
+  <h1>📁 Arquivos no LittleFS</h1>
+  <ul id="fileList">Carregando...</ul>
+
+  <script>
+    fetch("/api/list")
+      .then(res => res.json())
+      .then(files => {
+        const ul = document.getElementById("fileList");
+        ul.innerHTML = "";
+        files.forEach(file => {
+          const li = document.createElement("li");
+          li.innerHTML = `${file.name} (${file.size} bytes)
+            <a href="/download?file=${encodeURIComponent('/' + file.name)}">[baixar]</a>`;
+          ul.appendChild(li);
+        });
+      })
+      .catch(err => {
+        document.getElementById("fileList").innerHTML = "Erro ao carregar arquivos.";
+        console.error(err);
+      });
+  </script>
+</body>
+</html>
+

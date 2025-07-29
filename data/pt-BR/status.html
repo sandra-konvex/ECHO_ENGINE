@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Status do ESP32</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: sans-serif;
+            font-size: 20px;
+            text-align: center;
+            padding: 20px;
+        }
+        p {
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📋 Status do Sistema</h1>
+    <p>IP: <span id="ip">192.168.1.65</span></p>
+    <p>Hora atual: <span id="hora">--:--:--</span></p>
+    <p>Versão Web: <span id="versao">1.0.0</span></p>
+
+    <script>
+        setInterval(() => {
+            const agora = new Date();
+            document.getElementById("hora").textContent = agora.toLocaleTimeString();
+        }, 1000);
+    </script>
+</body>
+</html>

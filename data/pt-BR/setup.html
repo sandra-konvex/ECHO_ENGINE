@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Configurações do ESP32</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:,">
+    <style>
+        body {
+            font-family: sans-serif;
+            font-size: 20px;
+            text-align: center;
+            padding: 20px;
+        }
+        input, select, button {
+            margin: 10px;
+            padding: 12px;
+            font-size: 18px;
+            width: 80%;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Configurações</h1>
+    <form action="/setup" method="POST">
+        <input type="text" name="ssid" placeholder="SSID Wi-Fi" value="%SSID%"><br>
+        <input type="password" name="pass" placeholder="Senha Wi-Fi" value="%PASS%"><br>
+        <input type="number" name="brilho" min="0" max="255" placeholder="Brilho" value="%BRILHO%"><br>
+        <input type="number" name="sens" min="1" max="100" placeholder="Sensibilidade" value="%SENS%"><br>
+        <input type="text" name="ws_server" placeholder="WebSocket Server" value="%WS_SERVER%"><br>
+        <input type="number" name="ws_port" min="1" max="65535" placeholder="WebSocket Port" value="%WS_PORT%"><br>
+        <input type="text" name="school_id" placeholder="School ID" value="%SCHOOL_ID%"><br>
+        <select name="lang">
+            <option value="pt-BR" %LANG_pt-BR%>Português (Brasil)</option>
+            <option value="en" %LANG_en%>English</option>
+            <option value="es" %LANG_es%>Español</option>
+            <!-- Adicione outros idiomas conforme necessário -->
+        </select><br>
+        <button type="submit">Salvar</button>
+    </form>
+    <form action="/restart" method="POST" onsubmit="return confirm('Tem certeza que deseja reiniciar o ESP32?');">
+        <button type="submit">Reiniciar ESP32</button>
+    </form>
+</body>
+</html>

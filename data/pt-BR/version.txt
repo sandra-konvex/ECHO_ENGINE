@@ -1,0 +1,3 @@
+2.5.1
+files=controle.html,favicon.ico,grafico.html,index.html,setup.html,status.html,explorer.html,version.txt
+

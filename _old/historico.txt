@@ -1,0 +1,109 @@
+server.on("/gerar_historico", HTTP_GET, [](AsyncWebServerRequest *request)
+	{
+		const int totalNecessario = 340;
+		const String baseDir = "/dados/";
+		// Verifica se currentFileName está definido
+		if (currentFileName == "")
+		{
+			Serial.println("⚠️ currentFileName vazio!");
+			request->send(500, "text/plain", "Arquivo atual não definido.");
+			return;
+		}
+
+		// Remove prefixo se necessário
+		String arquivoAtual = currentFileName;
+		arquivoAtual.replace("/dados/", ""); // remove se já estiver incluso
+
+		// Extrai número do arquivo atual
+		int idxStart = arquivoAtual.indexOf('_');
+		int idxEnd = arquivoAtual.indexOf('.');
+		if (idxStart == -1 || idxEnd == -1)
+		{
+			Serial.println("⚠️ Nome de arquivo inválido: " + arquivoAtual);
+			request->send(500, "text/plain", "Erro ao interpretar nome do arquivo.");
+			return;
+		}
+
+		int num = arquivoAtual.substring(idxStart + 1, idxEnd).toInt();
+		String arquivoAnterior = "dados_" + String(num - 1) + ".jsonL";
+
+		Serial.println("🟢 arquivoAtual: " + arquivoAtual);
+		Serial.println("🟢 arquivoAnterior: " + arquivoAnterior);
+
+		std::vector<String> dadosTotais;
+
+		// Função para ler dados de um arquivo e adicionar ao vetor
+		auto lerDados = [&](String caminho)
+		{
+			String caminhoCompleto = baseDir + caminho;
+			Serial.println("🔍 Tentando abrir: " + caminhoCompleto);
+
+			if (!SD.exists(caminhoCompleto))
+			{
+				Serial.println("🚫 Arquivo não encontrado: " + caminhoCompleto);
+				return;
+			}
+
+			File file = SD.open(caminhoCompleto);
+			if (!file)
+			{
+				Serial.println("❌ Falha ao abrir arquivo: " + caminhoCompleto);
+				return;
+			}
+
+			int contagem = 0;
+			while (file.available())
+			{
+				String linha = file.readStringUntil('\n');
+				linha.trim();
+				if (linha.length() > 10)
+				{
+					// Evita lotar a RAM
+					if (dadosTotais.size() < 800)   // limite de segurança
+					{
+						dadosTotais.push_back(linha);
+						contagem++;
+					}
+					else
+					{
+						Serial.println("⚠️ Limite de dadosTotais atingido!");
+						break;
+					}
+				}
+			}
+			file.close();
+			Serial.println("📦 Dados carregados de " + caminho + ": " + String(contagem));
+		};
+
+
+
+		// Lê os arquivos
+		lerDados(arquivoAnterior);
+		lerDados(arquivoAtual);
+
+		// Mantém apenas os últimos 340 registros
+		int inicio = dadosTotais.size() > totalNecessario ? dadosTotais.size() - totalNecessario : 0;
+
+// Abre o arquivo para escrita usando LittleFS
+		File file = LittleFS.open("/historico.json", FILE_WRITE);
+		if (!file)
+		{
+			request->send(500, "text/plain", "Erro ao abrir /historico.json");
+			return;
+		}
+
+// Escreve os dados filtrados no arquivo
+		file.print("[");
+		for (int i = inicio; i < dadosTotais.size(); i++)
+		{
+			file.print(dadosTotais[i]);
+			if (i < dadosTotais.size() - 1) file.print(",");
+		}
+		file.print("]");
+		file.close();
+
+
+
+		Serial.println("📁 Histórico salvo em /historico.json");
+		request->send(200, "text/plain", "Histórico gerado com sucesso");
+	});

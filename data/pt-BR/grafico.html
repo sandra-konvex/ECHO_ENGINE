@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Gráfico Histórico</title>
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    #grafico {
+      width: 100%;
+      height: 500px;
+      background-color: #fff;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h1>📊 Histórico de Dados</h1>
+  <div id="grafico"></div>
+
+  <script>
+  let chart;
+  
+fetch('/gerar_historico')
+  .then(() => fetch('/historico.json'))
+  .then(res => res.json())
+  .then(data => {
+    const serieMax = [];
+    const serieMin = [];
+
+    data.forEach(ponto => {
+      const t = parseInt(ponto.time) * 1000;
+      serieMax.push([t, parseInt(ponto.max)]);
+      serieMin.push([t, parseInt(ponto.min)]);
+    });
+
+    chart = Highcharts.chart('grafico', {
+      chart: { type: 'spline' },
+      title: { text: 'Última Hora de Dados' },
+      xAxis: { type: 'datetime' },
+      yAxis: { title: { text: 'Valor' } },
+      series: [
+        { name: 'Máximo', data: serieMax, color: 'red' },
+        { name: 'Mínimo', data: serieMin, color: 'blue' }
+      ]
+    });
+
+    // 🔴 SSE: escuta novos dados em tempo real
+    if (!!window.EventSource) {
+      const source = new EventSource('/events');
+
+      source.addEventListener("dado", function(event) {
+        const ponto = JSON.parse(event.data);
+        const t = parseInt(ponto.time) * 1000;
+
+        chart.series[0].addPoint([t, parseInt(ponto.max)], true, chart.series[0].data.length >= 340);
+        chart.series[1].addPoint([t, parseInt(ponto.min)], true, chart.series[1].data.length >= 340);
+      }, false);
+    } else {
+      console.log("❌ SSE não suportado neste navegador.");
+    }
+  })
+  .catch(err => {
+    console.error("Erro ao gerar ou carregar histórico:", err);
+  });
+
+
+  
+</script>
+</body>
+</html>
