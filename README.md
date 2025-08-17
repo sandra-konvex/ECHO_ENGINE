@@ -1,5 +1,7 @@
 # 🎧 Monitor de Sons Ambientais para Inclusão de Crianças Autistas
 
+🌐 [Acesse o site do projeto](https://sandra-konvex.github.io/)
+
 Este projeto tem como objetivo desenvolver um dispositivo acessível para **monitoramento de sons ambientes**, com **interface visual local** para feedback imediato. A aplicação principal é em **salas de aula**, visando a **inclusão de crianças autistas com sensibilidade auditiva**.
 
 ## 🧠 Modelos Disponíveis
